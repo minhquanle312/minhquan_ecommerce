@@ -186,7 +186,7 @@ const Cart = () => {
               >
                 <PayPalButtons
                   style={{ layout: 'horizontal' }}
-                  createOrder={async () => {
+                  createOrder={async (data, actions) => {
                     try {
                       // const res = await axios({
                       //   url: 'http://localhost:3000/api/payment',
@@ -202,11 +202,13 @@ const Cart = () => {
                         },
                         body: JSON.stringify(cartItems),
                       })
-                      console.log(res)
-                      // return res.data.id
+                      return res.data.id
                     } catch (error) {
                       console.log('error', error)
                     }
+                    console.log(data, actions)
+
+                    // return actions.order.create({})
                   }}
                   onCancel={(data) => console.log('Cancel payment')}
                   onApprove={(data, actions) => {
