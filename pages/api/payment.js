@@ -9,12 +9,24 @@ let clientSecret =
 let environment = new Paypal.core.SandboxEnvironment(clientId, clientSecret)
 let client = new Paypal.core.PayPalHttpClient(environment)
 
+const configureEnvironment = function () {
+  const clientId = process.env.PAYPAL_CLIENT_ID
+  const clientSecret = process.env.PAYPAL_CLIENT_SECRET
+
+  return process.env.NODE_ENV === 'production'
+    ? new Paypal.core.LiveEnvironment(clientId, clientSecret)
+    : new Paypal.core.SandboxEnvironment(clientId, clientSecret)
+}
+
+// const client = function () {
+//   return new checkoutNodeJssdk.core.PayPalHttpClient(configureEnvironment())
+// }
+
 export default async function handler(req, res) {
   if (req.method === 'POST') {
-    console.log('req', req)
+    // console.log('req', req)
     const request = new Paypal.orders.OrdersCreateRequest()
     request.requestBody({
-      id: req._id,
       intent: 'CAPTURE',
       purchase_units: [
         {

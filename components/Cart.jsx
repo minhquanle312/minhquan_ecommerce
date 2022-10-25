@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import Link from 'next/link'
 import {
   AiOutlineMinus,
@@ -13,7 +13,7 @@ import { useStateContext } from '../context/StateContext'
 import { urlFor } from '../lib/client'
 import getStripe from '../lib/getStripe'
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js'
-import axios from 'axios'
+// import axios from 'axios'
 
 // const PayPalButton = paypal.Buttons.driver('react', { React, ReactDOM })
 
@@ -28,20 +28,43 @@ const Cart = () => {
     onRemove,
   } = useStateContext()
 
+  const [show, setShow] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [ErrorMessage, setErrorMessage] = useState('')
+  const [orderID, setOrderID] = useState(false)
+
   const createOrder = (data, actions) => {
-    return actions.order.create({
-      purchase_units: [
-        {
+    return actions.order
+      .create({
+        purchase_units: cartItems.map((item) => ({
+          description: item.name,
           amount: {
-            value: '0.01',
+            currency_code: 'USD',
+            value: item.price * item.quantity,
           },
+        })),
+        // not needed if a shipping address is actually needed
+        application_context: {
+          shipping_preference: 'NO_SHIPPING',
         },
-      ],
+      })
+      .then((orderID) => {
+        // setOrderID(orderID)
+        return orderID
+      })
+  }
+
+  // check Approval
+  const onApprove = (data, actions) => {
+    return actions.order.capture().then(function (details) {
+      const { payer } = details
+      // setSuccess(true)
     })
   }
-  const onApprove = (data, actions) => {
-    return actions.order.capture()
-  }
+  //capture likely error
+  // const onError = (data, actions) => {
+  //   setErrorMessage('An Error occured with your payment ')
+  // }
 
   const handleCheckout = async () => {
     const stripe = await getStripe()
@@ -61,22 +84,6 @@ const Cart = () => {
     toast.loading('Redirecting...')
 
     stripe.redirectToCheckout({ sessionId: data.id })
-  }
-
-  const handleCheckoutPaypal = async () => {
-    const response = await fetch('/api/paypal', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(cartItems),
-    })
-
-    if (response.statusCode === 500) return
-
-    const data = await response.json()
-
-    toast.loading('Redirecting...')
   }
 
   return (
@@ -186,35 +193,8 @@ const Cart = () => {
               >
                 <PayPalButtons
                   style={{ layout: 'horizontal' }}
-                  createOrder={async (data, actions) => {
-                    try {
-                      // const res = await axios({
-                      //   url: 'http://localhost:3000/api/payment',
-                      //   method: 'POST',
-                      //   headers: {
-                      //     'Content-Type': 'application/json',
-                      //   },
-                      // })
-                      const res = await fetch('/api/payment', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(cartItems),
-                      })
-                      return res.data.id
-                    } catch (error) {
-                      console.log('error', error)
-                    }
-                    console.log(data, actions)
-
-                    // return actions.order.create({})
-                  }}
-                  onCancel={(data) => console.log('Cancel payment')}
-                  onApprove={(data, actions) => {
-                    console.log('data', data)
-                    actions.order.capture()
-                  }}
+                  createOrder={createOrder}
+                  onApprove={onApprove}
                 />
               </PayPalScriptProvider>
             </div>
