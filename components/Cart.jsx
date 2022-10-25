@@ -66,6 +66,23 @@ const Cart = () => {
   //   setErrorMessage('An Error occured with your payment ')
   // }
 
+  const handleCheckoutVnpay = async () => {
+    const response = await fetch('/api/vnpay', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(cartItems),
+    })
+
+    if (response.statusCode === 500) return
+
+    const data = await response.json()
+    console.log('data', data)
+
+    toast.loading('Redirecting...')
+  }
+
   const handleCheckout = async () => {
     const stripe = await getStripe()
 
@@ -172,19 +189,8 @@ const Cart = () => {
             </div>
             <div className="btn-container">
               <button type="button" className="btn" onClick={handleCheckout}>
-                Pay with Stripe
+                Pay with MASTERCARD/VISA
               </button>
-              {/* <button
-                type="button"
-                className="btn"
-                onClick={handleCheckoutPaypal}
-              >
-                Pay with Paypal
-              </button> */}
-              {/* <PayPalButton
-                createOrder={(data, actions) => this.createOrder(data, actions)}
-                onApprove={(data, actions) => this.onApprove(data, actions)}
-              /> */}
               <PayPalScriptProvider
                 options={{
                   'client-id':
@@ -197,6 +203,13 @@ const Cart = () => {
                   onApprove={onApprove}
                 />
               </PayPalScriptProvider>
+              <button
+                type="button"
+                className="btn"
+                onClick={handleCheckoutVnpay}
+              >
+                Pay with VNPAY
+              </button>
             </div>
           </div>
         )}
